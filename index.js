@@ -77,7 +77,7 @@ database.connect((error) => {
 });
 */
 
-
+//it's for post ting request usin postman tool
 app.post('/addformreq', (req, res) => {
   const { name, address } = req.body; 
 
