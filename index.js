@@ -1,8 +1,9 @@
-
 const express = require("express");
 const mysql = require('mysql');
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 const app = express();
+
 app.use(bodyParser.json());
 
 const database = mysql.createConnection({
@@ -12,7 +13,6 @@ const database = mysql.createConnection({
   database: 'formAssignment'
 });
 
-
 database.connect((error) => {
   if (error) {
     console.log('Error connecting to MySQL:', error);
@@ -20,8 +20,9 @@ database.connect((error) => {
   }
 
   console.log('Connected to MySQL');
-})
- /* // Create the database if it doesn't exist
+});
+
+/* // Create the database if it doesn't exist
   const createDatabaseQuery = 'CREATE DATABASE IF NOT EXISTS formAssignment';
   database.query(createDatabaseQuery, (error) => {
     if (error) {
@@ -77,11 +78,44 @@ database.connect((error) => {
 });
 */
 
-//it's for post ting request usin postman tool
+
+// MongoDB connection
+const connectionMongoose = "mongodb://localhost:27017/smokeTreeformassignment";
+mongoose.connect(connectionMongoose, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("Connected to MongoDB"))
+.catch((error) => console.log("Error connecting to MongoDB", error));
+
+// Define schema and model
+const formSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  Address: { type: String, required: true }
+});
+
+const userData = mongoose.model("userData", formSchema);
+
+// Route to add form request using MongoDB
+app.post("/addformreq/mongodb", async (req, res) => {
+  const { name, Address } = req.body;
+  console.log("Received data:", req.body); 
+  try {
+    const addUser = new userData({ name, Address });
+    const savedUser = await addUser.save();
+    res.status(201).json({
+      message: "User and address added successfully",
+      user: savedUser,
+    });
+  } catch (error) {
+    console.log("Error inserting MongoDB values:", error);
+    res.status(500).json({ message: "Error inserting user in DB" });
+  }
+});
+
+
 app.post('/addformreq', (req, res) => {
   const { name, address } = req.body; 
-
-
 
   const insertUserQuery = 'INSERT INTO User (name) VALUES (?)';
   database.query(insertUserQuery, [name], (err, result) => {
@@ -91,18 +125,14 @@ app.post('/addformreq', (req, res) => {
     }
 
     const userId = result.insertId;
-  
 
-    
-
-    const addressformreq = 'INSERT INTO Address (userId, address) VALUES (?, ?)';
-    database.query(addressformreq, [userId, address], (err, addressResult) => {
+    const addressFormReq = 'INSERT INTO Address (userId, address) VALUES (?, ?)';
+    database.query(addressFormReq, [userId, address], (err, addressResult) => {
       if (err) {
         console.error('Error inserting address:', err);
         return res.status(500).json({ message: 'Error inserting address' });
       }
 
-      
       res.status(201).json({
         message: 'User and address added successfully',
         userId: userId,
@@ -112,9 +142,7 @@ app.post('/addformreq', (req, res) => {
   });
 });
 
-
-
-
+// Start the server
 app.listen(3000, () => {
   console.log("Server started on port 3000");
 });
