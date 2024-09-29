@@ -1,5 +1,5 @@
 const express = require("express");
-const mysql = require('mysql');
+const mysql = require("mysql");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const app = express();
@@ -18,7 +18,6 @@ database.connect((error) => {
     console.log('Error connecting to MySQL:', error);
     return;
   }
-
   console.log('Connected to MySQL');
 });
 
@@ -31,7 +30,7 @@ mongoose.connect(connectionMongoose, {
 .then(() => console.log("Connected to MongoDB"))
 .catch((error) => console.log("Error connecting to MongoDB", error));
 
-
+// Mongoose schema for user data
 const formSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true }, 
   Address: { type: String, required: true }
@@ -39,7 +38,6 @@ const formSchema = new mongoose.Schema({
 
 const userData = mongoose.model("userData", formSchema);
 
-// Route to add form request using MongoDB
 app.post("/addformreq/mongodb", async (req, res) => {
   const { name, Address } = req.body;
   console.log("Received data:", req.body); 
@@ -62,7 +60,7 @@ app.post("/addformreq/mongodb", async (req, res) => {
   }
 });
 
-
+// Route to add form request using MySQL
 app.post('/addformreq', (req, res) => {
   const { name, address } = req.body; 
 
@@ -104,7 +102,38 @@ app.post('/addformreq', (req, res) => {
   });
 });
 
+// Route to get data from both MySQL and MongoDB
+app.get('/getformdata', async (req, res) => {
+  try {
+    // Fetching data from MySQL
+    const getUserQuery = 'SELECT u.id AS userId, u.name, a.address FROM User u INNER JOIN Address a ON u.id = a.userId';
+    
+    database.query(getUserQuery, async (err, mysqlResults) => {
+      if (err) {
+        console.error('Error fetching data from MySQL:', err);
+        return res.status(500).json({ message: 'Error fetching data from MySQL' });
+      }
 
+
+      // Fetching data from MongoDB
+      const mongoResults = await userData.find();
+
+      
+      const combinedResults = {
+        mysqlUsers: mysqlResults,
+        mongoUsers: mongoResults,
+      };
+
+      res.status(200).json(combinedResults);
+    });
+    
+  } catch (error) {
+    console.error('Error fetching data from MongoDB:', error);
+    res.status(500).json({ message: 'Error fetching data from MongoDB' });
+  }
+});
+
+// Start the server
 app.listen(3000, () => {
   console.log("Server started on port 3000");
 });
