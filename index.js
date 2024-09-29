@@ -1,12 +1,15 @@
+
 const express = require("express");
 const mysql = require('mysql');
+const bodyParser = require("body-parser");
 const app = express();
-
+app.use(bodyParser.json());
 
 const database = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'lakshmi'
+  password: 'lakshmi',
+  database: 'formAssignment'
 });
 
 
@@ -17,8 +20,8 @@ database.connect((error) => {
   }
 
   console.log('Connected to MySQL');
-
-  // Create the database if it doesn't exist
+})
+ /* // Create the database if it doesn't exist
   const createDatabaseQuery = 'CREATE DATABASE IF NOT EXISTS formAssignment';
   database.query(createDatabaseQuery, (error) => {
     if (error) {
@@ -32,7 +35,7 @@ database.connect((error) => {
           console.log('Error switching to formAssignment database:', error);
           return;
         }
-        
+
         console.log('Switched to formAssignment database');
 
         // Create User table
@@ -52,7 +55,7 @@ database.connect((error) => {
         });
 
         // Create Address table 
-   const addressTableQuery = `
+        const addressTableQuery = `
     CREATE TABLE IF NOT EXISTS Address (
       id INT AUTO_INCREMENT PRIMARY KEY,
        userId INT,
@@ -61,23 +64,57 @@ database.connect((error) => {
           );
         `;
 
-      database.query(addressTableQuery, (error) => {
-        if (error) {
-           console.log('Error creating Address table:', error);
-        } else {
-          console.log('Address table created successfully');
+        database.query(addressTableQuery, (error) => {
+          if (error) {
+            console.log('Error creating Address table:', error);
+          } else {
+            console.log('Address table created successfully');
           }
         });
-
-
-
-        
       });
     }
   });
 });
+*/
 
-// Start the Express server
+
+app.post('/addformreq', (req, res) => {
+  const { name, address } = req.body; 
+
+
+
+  const insertUserQuery = 'INSERT INTO User (name) VALUES (?)';
+  database.query(insertUserQuery, [name], (err, result) => {
+    if (err) {
+      console.error('Error inserting user:', err);
+      return res.status(500).json({ message: 'Error inserting user' });
+    }
+
+    const userId = result.insertId;
+  
+
+    
+
+    const addressformreq = 'INSERT INTO Address (userId, address) VALUES (?, ?)';
+    database.query(addressformreq, [userId, address], (err, addressResult) => {
+      if (err) {
+        console.error('Error inserting address:', err);
+        return res.status(500).json({ message: 'Error inserting address' });
+      }
+
+      
+      res.status(201).json({
+        message: 'User and address added successfully',
+        userId: userId,
+        addressId: addressResult.insertId
+      });
+    });
+  });
+});
+
+
+
+
 app.listen(3000, () => {
   console.log("Server started on port 3000");
 });
