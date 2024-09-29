@@ -79,7 +79,7 @@ database.connect((error) => {
 */
 
 
-// MongoDB connection
+// MongoDB connection 
 const connectionMongoose = "mongodb://localhost:27017/smokeTreeformassignment";
 mongoose.connect(connectionMongoose, {
   useNewUrlParser: true,
@@ -88,7 +88,7 @@ mongoose.connect(connectionMongoose, {
 .then(() => console.log("Connected to MongoDB"))
 .catch((error) => console.log("Error connecting to MongoDB", error));
 
-// Define schema and model
+// Define schema and model mongoose creart
 const formSchema = new mongoose.Schema({
   name: { type: String, required: true },
   Address: { type: String, required: true }
