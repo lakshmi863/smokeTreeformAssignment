@@ -2,7 +2,12 @@ const express = require("express");
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const cors = require("cors");
+
 const app = express();
+
+// Use CORS middleware
+app.use(cors());
 
 app.use(bodyParser.json());
 
@@ -30,17 +35,17 @@ mongoose.connect(connectionMongoose, {
 .then(() => console.log("Connected to MongoDB"))
 .catch((error) => console.log("Error connecting to MongoDB", error));
 
-// Mongoose schema for user data
-const formSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true }, 
-  Address: { type: String, required: true }
-});
 
+const formSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  address: { type: String, required: true }, 
+});
 const userData = mongoose.model("userData", formSchema);
 
+// Add MongoDB user
 app.post("/addformreq/mongodb", async (req, res) => {
-  const { name, Address } = req.body;
-  console.log("Received data:", req.body); 
+  const { name, address } = req.body;  
+  console.log("Received data:", req.body);
   try {
     // Check for duplicate
     const existingUser = await userData.findOne({ name });
@@ -48,7 +53,7 @@ app.post("/addformreq/mongodb", async (req, res) => {
       return res.status(409).json({ message: "Duplicate entry: User already exists" });
     }
 
-    const addUser = new userData({ name, Address });
+    const addUser = new userData({ name, address });  
     const savedUser = await addUser.save();
     res.status(201).json({
       message: "User and address added successfully",
@@ -62,7 +67,7 @@ app.post("/addformreq/mongodb", async (req, res) => {
 
 // Route to add form request using MySQL
 app.post('/addformreq', (req, res) => {
-  const { name, address } = req.body; 
+  const { name, address } = req.body;
 
   // Check for duplicate in MySQL
   const checkUserQuery = 'SELECT * FROM User WHERE name = ?';
@@ -102,7 +107,7 @@ app.post('/addformreq', (req, res) => {
   });
 });
 
-// Route to get data from both MySQL and MongoDB
+
 app.get('/getformdata', async (req, res) => {
   try {
     // Fetching data from MySQL
@@ -114,10 +119,8 @@ app.get('/getformdata', async (req, res) => {
         return res.status(500).json({ message: 'Error fetching data from MySQL' });
       }
 
-
       // Fetching data from MongoDB
       const mongoResults = await userData.find();
-
       
       const combinedResults = {
         mysqlUsers: mysqlResults,
@@ -133,7 +136,7 @@ app.get('/getformdata', async (req, res) => {
   }
 });
 
-// Start the server
+
 app.listen(3000, () => {
   console.log("Server started on port 3000");
 });
